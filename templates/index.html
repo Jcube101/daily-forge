@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Daily Forge — build the habit of showing up on social media, one day at a time.">
+  <meta name="theme-color" content="#c45c26">
+  <title>Daily Forge</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind (utility layer; custom CSS does the heavy lifting) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1 class="logo">Daily <span>Forge</span></h1>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">🌙</button>
+    </header>
+
+    <div id="status-banner" class="status-banner new">
+      Loading...
+    </div>
+
+    <section class="stats-grid" aria-label="Streak statistics">
+      <div class="stat-card">
+        <div class="stat-value" id="current-streak">—</div>
+        <div class="stat-label">Current streak</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="longest-streak">—</div>
+        <div class="stat-label">Longest streak</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-posts">—</div>
+        <div class="stat-label">Total days</div>
+      </div>
+    </section>
+
+    <section class="heatmap-section" aria-label="Activity heatmap">
+      <h2 class="heatmap-title">Your activity</h2>
+      <div id="heatmap-grid" class="heatmap-grid"></div>
+      <div class="heatmap-legend">
+        <span>Less</span>
+        <div class="heatmap-legend-cells">
+          <div class="heatmap-cell" data-level="0"></div>
+          <div class="heatmap-cell" data-level="4"></div>
+        </div>
+        <span>More</span>
+      </div>
+    </section>
+
+    <section class="prompt-card" aria-label="Daily prompt">
+      <div class="prompt-label">Today's prompt</div>
+      <p id="prompt-text" class="prompt-text">Loading prompt...</p>
+    </section>
+
+    <section class="composer-section" aria-label="Post composer">
+      <div class="mode-tabs" role="tablist">
+        <button class="mode-tab active" data-panel="panel-single" role="tab" aria-selected="true">
+          Single post
+        </button>
+        <button class="mode-tab" data-panel="panel-thread" role="tab" aria-selected="false">
+          Thread
+        </button>
+      </div>
+
+      <!-- Single post panel -->
+      <div id="panel-single" class="composer-panel active" role="tabpanel">
+        <textarea
+          id="single-content"
+          rows="6"
+          placeholder="Write your post here... then copy and paste to X or LinkedIn."
+          aria-label="Post content"
+        ></textarea>
+        <div id="single-char-count" class="char-count">0 / 280</div>
+        <div class="btn-row">
+          <button id="copy-x-btn" class="btn btn-secondary">Copy for X</button>
+          <button id="copy-linkedin-btn" class="btn btn-secondary">Copy for LinkedIn</button>
+        </div>
+      </div>
+
+      <!-- Thread panel -->
+      <div id="panel-thread" class="composer-panel" role="tabpanel">
+        <div id="thread-items" class="thread-items"></div>
+        <button id="add-thread-item" class="btn btn-secondary">+ Add point</button>
+        <div class="btn-row">
+          <button id="format-thread-btn" class="btn btn-secondary">Format thread</button>
+          <button id="copy-thread-btn" class="btn btn-secondary">Copy thread</button>
+        </div>
+        <div id="thread-preview" class="thread-preview" aria-label="Formatted thread preview"></div>
+      </div>
+
+      <div class="btn-row" style="margin-top: 1.25rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+        <button id="mark-posted-btn" class="btn btn-primary">Mark as posted</button>
+      </div>
+    </section>
+
+    <footer class="app-footer">
+      <p>Show up first. Content tools come later.</p>
+      <p>v{{ version }}</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

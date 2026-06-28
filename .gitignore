@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Daily Forge local database
+daily_forge.db
+daily_forge.db-journal
+
+# Local IDE / agent tooling (not part of the project)
+mcps/
+terminals/
