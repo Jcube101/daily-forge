@@ -91,8 +91,9 @@ class TestHeatmap:
             freeze_dates={"2026-06-28"},
         )
         frozen = next(c for c in cells if c["date"] == "2026-06-28")
-        assert frozen["level"] == 2
+        assert frozen["level"] == 1
         assert frozen["frozen"] is True
+        assert frozen["posted"] is False
 
 
 class TestCharCount:

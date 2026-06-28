@@ -158,11 +158,13 @@ def build_heatmap(
     today: date | None = None,
     weeks: int = 52,
     freeze_dates: set[str] | None = None,
+    entries_by_date: dict[str, dict] | None = None,
 ) -> list[dict]:
     """Build GitHub-style heatmap: exactly N weeks ending on today."""
     today = today or date.today()
-    active = effective_dates(entry_dates, freeze_dates or set())
-    # Rolling window: 52*7 days inclusive, anchored on today (no future dates).
+    freeze_dates = freeze_dates or set()
+    entries_by_date = entries_by_date or {}
+    active = effective_dates(entry_dates, freeze_dates)
     start = today - timedelta(days=weeks * 7 - 1)
 
     cells: list[dict] = []
@@ -170,14 +172,27 @@ def build_heatmap(
     while cursor <= today:
         date_str = cursor.isoformat()
         posted = date_str in entry_dates
-        frozen = date_str in (freeze_dates or set())
+        frozen = date_str in freeze_dates
         covered = date_str in active
+        entry = entries_by_date.get(date_str, {})
+        post_type = entry.get("post_type")
+
+        # GitHub-style intensity: 0=none, 1=freeze, 2=single, 3-4=thread
+        if posted:
+            level = 4 if post_type == "thread" else 3 if post_type == "single" else 2
+        elif frozen:
+            level = 1
+        else:
+            level = 0
+
         cells.append(
             {
                 "date": date_str,
                 "count": 1 if covered else 0,
-                "level": 4 if posted else (2 if frozen else 0),
+                "level": level,
                 "frozen": frozen,
+                "posted": posted,
+                "post_type": post_type,
             }
         )
         cursor += timedelta(days=1)

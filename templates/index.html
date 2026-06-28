@@ -86,18 +86,40 @@
     <section id="weekly-recap" class="weekly-recap" aria-label="Weekly recap"></section>
 
     <section class="heatmap-section" aria-label="Activity heatmap">
-      <h2 class="section-title">Your activity</h2>
-      <div id="heatmap-grid" class="heatmap-grid"></div>
+      <div class="heatmap-header">
+        <h2 class="section-title">Your activity</h2>
+        <div class="heatmap-options" role="group" aria-label="Heatmap display options">
+          <select id="heatmap-period" class="heatmap-select" aria-label="Time period"></select>
+          <select id="heatmap-week-start" class="heatmap-select" aria-label="Week start day">
+            <option value="sunday">Week starts Sunday</option>
+            <option value="monday">Week starts Monday</option>
+          </select>
+          <label class="heatmap-checkbox">
+            <input type="checkbox" id="heatmap-show-freezes" checked> Show freezes
+          </label>
+        </div>
+      </div>
+      <div class="heatmap-chart">
+        <div class="heatmap-months" id="heatmap-months"></div>
+        <div class="heatmap-body">
+          <div class="heatmap-day-labels" id="heatmap-day-labels"></div>
+          <div class="heatmap-scroll">
+            <div id="heatmap-grid" class="heatmap-grid"></div>
+          </div>
+        </div>
+      </div>
+      <div id="heatmap-tooltip" class="heatmap-tooltip" hidden></div>
       <p id="heatmap-range" class="heatmap-range"></p>
       <div class="heatmap-legend">
         <span>Less</span>
         <div class="heatmap-legend-cells">
           <div class="heatmap-cell" data-level="0"></div>
+          <div class="heatmap-cell" data-level="1"></div>
           <div class="heatmap-cell" data-level="2"></div>
+          <div class="heatmap-cell" data-level="3"></div>
           <div class="heatmap-cell" data-level="4"></div>
         </div>
         <span>More</span>
-        <span class="legend-freeze">🧊 freeze</span>
       </div>
     </section>
 
@@ -154,6 +176,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="/static/js/settings.js"></script>
+  <script src="/static/js/heatmap.js"></script>
   <script src="/static/js/char-count.js"></script>
   <script src="/static/js/drafts.js"></script>
   <script src="/static/js/notifications.js"></script>

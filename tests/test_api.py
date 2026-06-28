@@ -37,6 +37,12 @@ def test_stats_new_user(client):
     assert data["freezes_remaining"] == 2
 
 
+def test_stats_heatmap_weeks_param(client):
+    res = client.get("/api/stats?tz=UTC&weeks=4")
+    assert res.status_code == 200
+    assert len(res.json()["heatmap"]) == 4 * 7
+
+
 def test_mark_posted(client):
     res = client.post(
         "/api/post",

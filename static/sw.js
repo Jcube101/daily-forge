@@ -2,12 +2,13 @@
  * Daily Forge service worker — offline shell + notification support.
  */
 
-const CACHE_NAME = "daily-forge-v0.2.1";
+const CACHE_NAME = "daily-forge-v0.2.2";
 const PRECACHE_URLS = [
   "/",
   "/static/style.css",
   "/static/app.js",
   "/static/js/settings.js",
+  "/static/js/heatmap.js",
   "/static/js/char-count.js",
   "/static/js/drafts.js",
   "/static/js/onboarding.js",

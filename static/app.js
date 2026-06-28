@@ -4,7 +4,10 @@
 
 const API = {
   prompt: () => fetch(`/api/prompt?${Settings.tzParam()}`).then((r) => r.json()),
-  stats: () => fetch(`/api/stats?${Settings.tzParam()}`).then((r) => r.json()),
+  stats: () => {
+    const weeks = typeof Heatmap !== "undefined" ? Heatmap.getWeeks() : 52;
+    return fetch(`/api/stats?${Settings.tzParam()}&weeks=${weeks}`).then((r) => r.json());
+  },
   today: () =>
     fetch(`/api/today?${Settings.tzParam()}`).then((r) =>
       r.ok && r.status !== 204 ? r.json() : null
@@ -91,65 +94,11 @@ async function copyText(text, label = "Copied!") {
   }
 }
 
-// --- Heatmap ---
-
-function renderHeatmap(cells) {
-  const container = document.getElementById("heatmap-grid");
-  container.innerHTML = "";
-
-  const weeks = [];
-  let currentWeek = [];
-
-  cells.forEach((cell, i) => {
-    const d = new Date(cell.date + "T12:00:00");
-    const dayOfWeek = d.getDay();
-    if (i === 0 && dayOfWeek !== 0) {
-      for (let pad = 0; pad < dayOfWeek; pad++) currentWeek.push(null);
-    }
-    currentWeek.push(cell);
-    if (dayOfWeek === 6 || i === cells.length - 1) {
-      weeks.push(currentWeek);
-      currentWeek = [];
-    }
-  });
-
-  weeks.forEach((week) => {
-    const weekEl = document.createElement("div");
-    weekEl.className = "heatmap-week";
-    week.forEach((cell) => {
-      const el = document.createElement("div");
-      if (cell) {
-        el.className = "heatmap-cell";
-        el.dataset.level = cell.level;
-        const label = cell.frozen ? "Streak freeze" : cell.count ? "Posted" : "No post";
-        el.title = `${cell.date}: ${label}`;
-      } else {
-        el.className = "heatmap-cell";
-        el.style.visibility = "hidden";
-      }
-      weekEl.appendChild(el);
-    });
-    container.appendChild(weekEl);
-  });
-
-  // Scroll to today (rightmost column).
-  container.scrollLeft = container.scrollWidth;
-
-  // Show date range under heatmap.
-  const rangeEl = document.getElementById("heatmap-range");
-  if (rangeEl && cells.length > 0) {
-    const fmt = (iso) => {
-      const d = new Date(iso + "T12:00:00");
-      return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-    };
-    rangeEl.textContent = `${fmt(cells[0].date)} – ${fmt(cells[cells.length - 1].date)}`;
-  }
-}
-
 // --- Stats ---
 
 async function loadStats() {
-  const stats = await API.stats();
+  const weeks = Heatmap.getWeeks();
+  const stats = await fetch(`/api/stats?${Settings.tzParam()}&weeks=${weeks}`).then((r) => r.json());
 
   document.getElementById("current-streak").textContent = stats.current_streak;
   document.getElementById("longest-streak").textContent = stats.longest_streak;
@@ -159,7 +108,7 @@ async function loadStats() {
   banner.textContent = stats.message;
   banner.className = `status-banner ${stats.status}`;
 
-  renderHeatmap(stats.heatmap);
+  Heatmap.render(stats.heatmap);
   updateEmptyState(stats.total_posts);
 
   const markBtn = document.getElementById("mark-posted-btn");
@@ -529,6 +478,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   await Settings.loadFromServer();
   await Notifications.registerServiceWorker();
+  Heatmap.init();
 
   initModeTabs();
   initPlatformToggle();

@@ -152,12 +152,16 @@ async def daily_prompt(tz: str | None = Query(None)) -> PromptResponse:
 
 
 @app.get("/api/stats", response_model=StatsResponse)
-async def stats(tz: str | None = Query(None)) -> StatsResponse:
+async def stats(
+    tz: str | None = Query(None),
+    weeks: int = Query(52, ge=4, le=52),
+) -> StatsResponse:
     """Return streak statistics and heatmap data."""
     timezone = _resolve_tz(tz)
     today = today_in_timezone(timezone)
     entry_dates = get_all_entry_dates()
     freeze_dates = get_freeze_dates()
+    entries_by_date = {e["entry_date"]: e for e in get_recent_entries(limit=400)}
     current, longest, status, message = calculate_streaks(
         entry_dates, today, freeze_dates
     )
@@ -170,7 +174,13 @@ async def stats(tz: str | None = Query(None)) -> StatsResponse:
         posted_today=today.isoformat() in entry_dates,
         status=status,
         message=message,
-        heatmap=build_heatmap(entry_dates, today, freeze_dates=freeze_dates),
+        heatmap=build_heatmap(
+            entry_dates,
+            today,
+            weeks=weeks,
+            freeze_dates=freeze_dates,
+            entries_by_date=entries_by_date,
+        ),
         today=today.isoformat(),
         timezone=timezone,
         freezes_remaining=remaining,
