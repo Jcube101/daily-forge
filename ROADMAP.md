@@ -16,44 +16,44 @@
 
 ---
 
-## Phase 2 — Polish & Retention (v0.2)
+## Phase 2 — Polish & Retention ✅ (v0.2)
 
 ### Habit mechanics
 
-- [ ] Configurable timezone (streak day boundary)
-- [ ] Optional posting reminder (browser notification / local cron)
-- [ ] Weekly recap view (posts this week, streak trend)
-- [ ] Streak freeze / grace tokens (1 per month?)
+- [x] Configurable timezone (streak day boundary)
+- [x] Optional posting reminder (browser notifications + service worker)
+- [x] Weekly recap view (posts this week, streak trend, summary)
+- [x] Streak freeze / grace tokens (2 per month)
 
 ### Composer improvements
 
-- [ ] Draft autosave to localStorage
-- [ ] X character count with URL weighting
-- [ ] LinkedIn post length guidance
-- [ ] Thread split preview (per-tweet chunks under 280 chars)
-- [ ] Export history as Markdown
+- [x] Draft autosave to localStorage
+- [x] X character count with URL weighting
+- [x] LinkedIn post length guidance + platform toggle
+- [x] Thread split preview (per-tweet chunks under 280 chars)
+- [x] Export history as Markdown
 
 ### UX
 
-- [ ] Onboarding flow (3-step: prompt → write → mark posted)
-- [ ] Keyboard shortcuts (Ctrl+Enter to mark posted)
-- [ ] Improved empty state illustrations
-- [ ] Self-hosted fonts (offline-ready)
+- [x] Onboarding flow (3-step: welcome → timezone → first prompt)
+- [x] Keyboard shortcuts (Ctrl+Enter mark posted, Ctrl+S save draft)
+- [x] Improved empty states with subtle illustrations
+- [x] PWA manifest + service worker (offline shell)
 
 ### Quality
 
-- [ ] pytest suite for streak logic
+- [x] pytest suite for streak logic and API
 - [ ] GitHub Actions CI (lint + test)
-- [ ] Migrate FastAPI startup to `lifespan` handler
+- [x] Migrate FastAPI startup to `lifespan` handler
 
 ---
 
 ## Phase 3 — Pi & PWA (v0.3)
 
 - [ ] Raspberry Pi deployment (systemd + Cloudflare Tunnel)
-- [ ] PWA manifest + service worker
-- [ ] Installable on mobile home screen
+- [ ] Installable on mobile home screen (full PWA polish)
 - [ ] Optional backup/restore (export/import DB)
+- [ ] Self-hosted fonts (fully offline)
 
 ---
 
@@ -80,4 +80,4 @@
 
 ## How to influence the roadmap
 
-Open an issue with the `roadmap` label. PRs welcome for Phase 2 items marked above.
+Open an issue with the `roadmap` label. PRs welcome for Phase 3 items.

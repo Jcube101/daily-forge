@@ -11,6 +11,9 @@ from typing import Generator
 # Database file lives at project root (next to requirements.txt).
 DB_PATH = Path(__file__).resolve().parent.parent / "daily_forge.db"
 
+# Grace tokens allowed per calendar month (user timezone).
+FREEZES_PER_MONTH = 2
+
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -54,6 +57,21 @@ def init_db() -> None:
 
             CREATE INDEX IF NOT EXISTS idx_daily_entries_date
                 ON daily_entries (entry_date DESC);
+
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS streak_freezes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                freeze_date TEXT NOT NULL UNIQUE,
+                month_key TEXT NOT NULL,
+                used_at TEXT NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_streak_freezes_month
+                ON streak_freezes (month_key);
             """
         )
 
@@ -134,3 +152,99 @@ def get_recent_entries(limit: int = 30) -> list[dict]:
             (limit,),
         ).fetchall()
     return [dict(row) for row in rows]
+
+
+def get_all_entries() -> list[dict]:
+    """Return all entries, oldest first."""
+    with db_session() as conn:
+        rows = conn.execute(
+            "SELECT * FROM daily_entries ORDER BY entry_date ASC"
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+# --- Settings ---
+
+
+def get_setting(key: str, default: str | None = None) -> str | None:
+    """Return a single app setting value."""
+    with db_session() as conn:
+        row = conn.execute(
+            "SELECT value FROM app_settings WHERE key = ?",
+            (key,),
+        ).fetchone()
+    return row["value"] if row else default
+
+
+def set_setting(key: str, value: str) -> None:
+    """Upsert an app setting."""
+    with db_session() as conn:
+        conn.execute(
+            """
+            INSERT INTO app_settings (key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """,
+            (key, value),
+        )
+
+
+def get_all_settings() -> dict[str, str]:
+    """Return all settings as a dict."""
+    with db_session() as conn:
+        rows = conn.execute("SELECT key, value FROM app_settings").fetchall()
+    return {row["key"]: row["value"] for row in rows}
+
+
+# --- Streak freezes ---
+
+
+def get_freeze_dates() -> set[str]:
+    """Return all dates protected by a streak freeze."""
+    with db_session() as conn:
+        rows = conn.execute("SELECT freeze_date FROM streak_freezes").fetchall()
+    return {row["freeze_date"] for row in rows}
+
+
+def get_freezes_for_month(month_key: str) -> list[dict]:
+    """Return freezes used in a given YYYY-MM month."""
+    with db_session() as conn:
+        rows = conn.execute(
+            """
+            SELECT * FROM streak_freezes
+            WHERE month_key = ?
+            ORDER BY freeze_date DESC
+            """,
+            (month_key,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def count_freezes_in_month(month_key: str) -> int:
+    """Count how many freezes were used in a month."""
+    with db_session() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS cnt FROM streak_freezes WHERE month_key = ?",
+            (month_key,),
+        ).fetchone()
+    return int(row["cnt"])
+
+
+def add_streak_freeze(freeze_date: date, month_key: str) -> dict:
+    """Record a streak freeze for a missed day."""
+    used_at = _utc_now_iso()
+    date_str = freeze_date.isoformat()
+
+    with db_session() as conn:
+        conn.execute(
+            """
+            INSERT INTO streak_freezes (freeze_date, month_key, used_at)
+            VALUES (?, ?, ?)
+            """,
+            (date_str, month_key, used_at),
+        )
+        row = conn.execute(
+            "SELECT * FROM streak_freezes WHERE freeze_date = ?",
+            (date_str,),
+        ).fetchone()
+
+    return dict(row)

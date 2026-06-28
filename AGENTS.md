@@ -6,32 +6,48 @@ This file helps AI agents work effectively in the Daily Forge codebase.
 
 Daily Forge is a **local-first habit tracker** for daily social media posting. Philosophy: **show up first, content tools later**. No OAuth or social APIs in v1.
 
+**Current version:** 0.2.0 (Phase 2 — polish & retention)
+
 ## Tech stack
 
 | Layer | Choice |
 |-------|--------|
-| Backend | Python 3.11+, FastAPI, uvicorn |
-| Frontend | Jinja2 template + vanilla JS + custom CSS (Tailwind CDN for utilities only) |
+| Backend | Python 3.11+, FastAPI, uvicorn, lifespan handler |
+| Frontend | Jinja2 template + modular vanilla JS + custom CSS |
 | Database | SQLite (`daily_forge.db` at project root) |
 | Validation | Pydantic v2 |
+| Tests | pytest + httpx TestClient |
+| PWA | manifest.json + service worker (`static/sw.js`) |
 
 ## Key files
 
 | File | Purpose |
 |------|---------|
-| `daily_forge/main.py` | FastAPI routes, app startup, static mount |
-| `daily_forge/database.py` | SQLite schema, CRUD for `daily_entries` |
-| `daily_forge/models.py` | Streak logic, heatmap builder, prompts, Pydantic models |
+| `daily_forge/main.py` | FastAPI routes, lifespan, static mount |
+| `daily_forge/database.py` | SQLite schema: entries, settings, freezes |
+| `daily_forge/models.py` | Streak logic, timezone, heatmap, thread split, recap |
 | `templates/index.html` | Main UI (served at `/`) |
-| `static/app.js` | Client API calls, heatmap render, copy/thread UX |
-| `static/style.css` | Design system (CSS variables, dark mode) |
+| `static/app.js` | Main client orchestration |
+| `static/js/*.js` | Modular features (settings, drafts, onboarding, etc.) |
+| `static/sw.js` | Service worker — offline cache + notifications |
+| `tests/test_models.py` | Streak/timezone/char-count unit tests |
+| `tests/test_api.py` | API integration tests |
 
 ## Architecture decisions
 
-1. **Single-user local app** — no auth, no multi-tenancy. One SQLite file per install.
-2. **Streak = calendar day posted** — `entry_date` is `YYYY-MM-DD`. Grace period until end of day.
-3. **Manual posting workflow** — user copies text, posts externally, clicks "Mark as posted".
-4. **Jinja2 for HTML** — not a SPA. API is JSON for dynamic sections only.
+1. **Single-user local app** — no auth, no multi-tenancy.
+2. **Streak = calendar day in user timezone** — client sends `tz` query param or stores in settings.
+3. **Streak freezes** — 2 per month; stored in `streak_freezes` table; count as posted for streak math.
+4. **Manual posting workflow** — copy → paste externally → mark posted.
+5. **Drafts in localStorage** — server stores only completed posts; drafts are client-side.
+6. **Jinja2 + vanilla JS** — not a SPA.
+
+## Timezone flow
+
+- Browser detects IANA timezone via `Intl.DateTimeFormat`.
+- Stored in `localStorage` (`df-timezone`) and synced to `app_settings` table.
+- All streak/date APIs accept `?tz=America/New_York`.
+- `POST /api/post` accepts `timezone` in body.
 
 ## Common tasks
 
@@ -39,43 +55,27 @@ Daily Forge is a **local-first habit tracker** for daily social media posting. P
 
 1. Add Pydantic model in `models.py` if needed.
 2. Add route in `main.py`.
-3. Wire up in `static/app.js`.
+3. Wire up in `static/app.js` or a `static/js/*.js` module.
 
 ### Change streak logic
 
-Edit `calculate_streaks()` in `models.py`. Update tests if added later.
+Edit `calculate_streaks()` in `models.py`. Add/update tests in `tests/test_models.py`.
 
-### Change UI
-
-- Layout/structure: `templates/index.html`
-- Behavior: `static/app.js`
-- Styling: `static/style.css` (prefer CSS variables in `:root`)
-
-## Running locally
+### Run tests
 
 ```bash
-python -m venv venv
-source venv/Scripts/activate  # Windows Git Bash
-pip install -r requirements.txt
-uvicorn daily_forge.main:app --reload
+pytest tests/ -v
 ```
 
-Or `run.bat` on Windows.
-
-## What NOT to do (v1 scope)
+## What NOT to do
 
 - Do not add social media API integrations without explicit request.
-- Do not add user accounts / auth unless migrating to multi-user.
 - Do not replace vanilla JS with React/Vue unless asked.
 - Do not commit `daily_forge.db` (gitignored).
-
-## Deployment target
-
-Windows local dev first. Future: Raspberry Pi via systemd + Cloudflare Tunnel (see `SPEC.md`).
 
 ## Documentation map
 
 - `SPEC.md` — technical specification
 - `ROADMAP.md` — planned features by phase
-- `LEARNINGS.md` — decisions made during initial build
+- `LEARNINGS.md` — decisions made during builds
 - `CONTRIBUTING.md` — how to contribute

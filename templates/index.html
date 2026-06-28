@@ -7,26 +7,66 @@
   <meta name="theme-color" content="#c45c26">
   <title>Daily Forge</title>
 
-  <!-- Fonts -->
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
 
-  <!-- Tailwind (utility layer; custom CSS does the heavy lifting) -->
   <script src="https://cdn.tailwindcss.com"></script>
-
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <div class="app-container">
     <header class="app-header">
       <h1 class="logo">Daily <span>Forge</span></h1>
-      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">🌙</button>
+      <div class="header-actions">
+        <button id="settings-toggle" class="icon-btn" aria-label="Settings" title="Settings">⚙️</button>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">🌙</button>
+      </div>
     </header>
 
-    <div id="status-banner" class="status-banner new">
-      Loading...
-    </div>
+    <!-- Settings drawer -->
+    <aside id="settings-panel" class="settings-panel" aria-label="Settings">
+      <h2 class="section-title">Settings</h2>
+      <label class="settings-label" for="timezone-select">Timezone</label>
+      <select id="timezone-select" class="settings-select"></select>
+
+      <label class="settings-label">
+        <input type="checkbox" id="reminder-toggle"> Daily reminder
+      </label>
+      <input type="time" id="reminder-time" class="settings-select" value="18:00">
+
+      <div class="freeze-section">
+        <h3 class="settings-subtitle">Streak freeze</h3>
+        <p id="freeze-info" class="settings-hint">—</p>
+        <label class="settings-label" for="freeze-date">Protect a missed day</label>
+        <div class="freeze-row">
+          <input type="date" id="freeze-date" class="settings-select">
+          <button id="use-freeze-btn" class="btn btn-secondary">Use freeze</button>
+        </div>
+      </div>
+
+      <button id="export-md-btn" class="btn btn-secondary" style="width:100%;margin-top:1rem;">Export history (.md)</button>
+      <p class="settings-hint shortcuts-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> mark posted · <kbd>Ctrl</kbd>+<kbd>S</kbd> save draft</p>
+    </aside>
+
+    <div id="status-banner" class="status-banner new">Loading...</div>
+
+    <!-- Empty state -->
+    <section id="empty-state" class="empty-state" aria-label="Getting started">
+      <div class="empty-illustration" aria-hidden="true">
+        <svg viewBox="0 0 120 80" width="120" height="80" fill="none">
+          <rect x="10" y="20" width="100" height="50" rx="8" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+          <line x1="25" y1="38" x2="85" y2="38" stroke="currentColor" stroke-width="2" opacity="0.2"/>
+          <line x1="25" y1="50" x2="65" y2="50" stroke="currentColor" stroke-width="2" opacity="0.15"/>
+          <circle cx="60" cy="12" r="8" fill="var(--accent)" opacity="0.6"/>
+        </svg>
+      </div>
+      <p class="empty-title">Your streak starts with one post</p>
+      <p class="empty-body">Write something small today. Consistency beats perfection — every day you show up is a win.</p>
+    </section>
 
     <section class="stats-grid" aria-label="Streak statistics">
       <div class="stat-card">
@@ -43,16 +83,21 @@
       </div>
     </section>
 
+    <section id="weekly-recap" class="weekly-recap" aria-label="Weekly recap"></section>
+
     <section class="heatmap-section" aria-label="Activity heatmap">
-      <h2 class="heatmap-title">Your activity</h2>
+      <h2 class="section-title">Your activity</h2>
       <div id="heatmap-grid" class="heatmap-grid"></div>
+      <p id="heatmap-range" class="heatmap-range"></p>
       <div class="heatmap-legend">
         <span>Less</span>
         <div class="heatmap-legend-cells">
           <div class="heatmap-cell" data-level="0"></div>
+          <div class="heatmap-cell" data-level="2"></div>
           <div class="heatmap-cell" data-level="4"></div>
         </div>
         <span>More</span>
+        <span class="legend-freeze">🧊 freeze</span>
       </div>
     </section>
 
@@ -62,23 +107,21 @@
     </section>
 
     <section class="composer-section" aria-label="Post composer">
-      <div class="mode-tabs" role="tablist">
-        <button class="mode-tab active" data-panel="panel-single" role="tab" aria-selected="true">
-          Single post
-        </button>
-        <button class="mode-tab" data-panel="panel-thread" role="tab" aria-selected="false">
-          Thread
-        </button>
+      <div class="composer-toolbar">
+        <div class="mode-tabs" role="tablist">
+          <button class="mode-tab active" data-panel="panel-single" role="tab" aria-selected="true">Single post</button>
+          <button class="mode-tab" data-panel="panel-thread" role="tab" aria-selected="false">Thread</button>
+        </div>
+        <div class="platform-toggle" role="group" aria-label="Platform guidance">
+          <button class="platform-btn active" data-platform="x">X</button>
+          <button class="platform-btn" data-platform="linkedin">LinkedIn</button>
+        </div>
       </div>
 
-      <!-- Single post panel -->
+      <ul id="platform-tips" class="platform-tips"></ul>
+
       <div id="panel-single" class="composer-panel active" role="tabpanel">
-        <textarea
-          id="single-content"
-          rows="6"
-          placeholder="Write your post here... then copy and paste to X or LinkedIn."
-          aria-label="Post content"
-        ></textarea>
+        <textarea id="single-content" rows="6" placeholder="Write your post here… then copy and paste to X or LinkedIn." aria-label="Post content"></textarea>
         <div id="single-char-count" class="char-count">0 / 280</div>
         <div class="btn-row">
           <button id="copy-x-btn" class="btn btn-secondary">Copy for X</button>
@@ -86,7 +129,6 @@
         </div>
       </div>
 
-      <!-- Thread panel -->
       <div id="panel-thread" class="composer-panel" role="tabpanel">
         <div id="thread-items" class="thread-items"></div>
         <button id="add-thread-item" class="btn btn-secondary">+ Add point</button>
@@ -95,21 +137,28 @@
           <button id="copy-thread-btn" class="btn btn-secondary">Copy thread</button>
         </div>
         <div id="thread-preview" class="thread-preview" aria-label="Formatted thread preview"></div>
+        <div id="thread-split-preview" class="thread-split-preview" aria-label="Thread split preview"></div>
       </div>
 
-      <div class="btn-row" style="margin-top: 1.25rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+      <div class="composer-footer">
         <button id="mark-posted-btn" class="btn btn-primary">Mark as posted</button>
       </div>
     </section>
 
     <footer class="app-footer">
       <p>Show up first. Content tools come later.</p>
-      <p>v{{ version }}</p>
+      <p>v0.2.0</p>
     </footer>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <script src="/static/js/settings.js"></script>
+  <script src="/static/js/char-count.js"></script>
+  <script src="/static/js/drafts.js"></script>
+  <script src="/static/js/notifications.js"></script>
+  <script src="/static/js/recap.js"></script>
+  <script src="/static/js/onboarding.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>
